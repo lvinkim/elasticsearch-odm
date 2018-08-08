@@ -1,0 +1,11 @@
+/*
+
+!.gitignore
+!/src/
+!/tests/
+!composer.json
+!composer.lock
+!docker-compose.yml
+!phpunit.xml.dist
+!LICENSE
+!README.md

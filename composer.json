@@ -1,0 +1,21 @@
+{
+  "name": "lvinkim/elasticsearch-odm",
+  "require": {
+    "php": ">=7.1",
+    "doctrine/annotations": "^1.6",
+    "elasticsearch/elasticsearch": "^6.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^6.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Lvinkim\\ElasticSearchODM\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  }
+}
