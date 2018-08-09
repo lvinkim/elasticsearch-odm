@@ -33,6 +33,7 @@ final class Field extends AbstractField
         'date',
         'boolean',
         'nested',
+        'object',
     ];
 
     static public $defaultPropertyTypeMap = [
@@ -41,8 +42,9 @@ final class Field extends AbstractField
         'integer' => 'int',
         'float' => 'float',
         'date' => 'date',
-        'boolean' => 'boolean',
-        'nested' => 'raw',
+        'boolean' => 'bool',
+        'nested' => 'embedMany',
+        'object' => 'embedOne',
     ];
 
     public $property = 'keyword';

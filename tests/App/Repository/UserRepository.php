@@ -21,7 +21,7 @@ class UserRepository extends Repository
      */
     protected function getIndexName(): string
     {
-        return 'unit-test';
+        return 'unit-test-v4';
     }
 
     /**

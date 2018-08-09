@@ -9,7 +9,8 @@
 namespace Tests\App\Entity;
 
 use Lvinkim\ElasticSearchODM\Annotations as ODM;
-use MongoDB\BSON\ObjectId;
+use Tests\App\Entity\Embed\Company;
+use Tests\App\Entity\Embed\Member;
 
 /**
  * Class User
@@ -52,14 +53,56 @@ class User
     /**
      * 出生日期
      * @var \DateTime
-     * @ODM\Field(target="date")
+     * @ODM\Field(property="date")
      */
     private $birth;
 
     /**
+     * 所在公司
+     * @var Company
+     * @ODM\EmbedOne(target="Tests\App\Entity\Embed\Company", options={
+     *     "properties"={
+     *          "address"={
+     *              "properties"={
+     *                  "country"={
+     *                      "type"="keyword"
+     *                  },
+     *                  "city"={
+     *                      "type"="keyword"
+     *                  }
+     *              }
+     *          },
+     *          "contact"={
+     *              "type"="keyword"
+     *          },
+     *          "name"={
+     *              "type"="keyword"
+     *          }
+     *     }
+     * })
+     */
+    private $company;
+
+    /**
+     * 家庭成员
+     * @var Member[]
+     * @ODM\EmbedMany(target="Tests\App\Entity\Embed\Member", options={
+     *   "properties"= {
+     *       "name"= {
+     *           "type"= "keyword"
+     *       },
+     *       "relation"= {
+     *           "type"= "keyword"
+     *       }
+     *   }
+     * })
+     */
+    private $families;
+
+    /**
      * 备注信息
      * @var mixed
-     * @ODM\Field(property="text")
+     * @ODM\Field(property="keyword")
      */
     private $remark;
 

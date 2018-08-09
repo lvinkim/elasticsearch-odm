@@ -29,6 +29,8 @@ class AnnotationParser
     {
         if (!self::$registered) {
             AnnotationRegistry::registerFile(__DIR__ . '/Annotations/AbstractField.php');
+            AnnotationRegistry::registerFile(__DIR__ . '/Annotations/EmbedMany.php');
+            AnnotationRegistry::registerFile(__DIR__ . '/Annotations/EmbedOne.php');
             AnnotationRegistry::registerFile(__DIR__ . '/Annotations/Entity.php');
             AnnotationRegistry::registerFile(__DIR__ . '/Annotations/Field.php');
             AnnotationRegistry::registerFile(__DIR__ . '/Annotations/Id.php');

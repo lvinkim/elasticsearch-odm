@@ -53,6 +53,10 @@ abstract class Repository
      */
     abstract protected function getEntityClassName(): string;
 
+    /**
+     * 删除索引
+     * @return array
+     */
     public function deleteIndex()
     {
         $params = [
@@ -64,50 +68,117 @@ abstract class Repository
     }
 
     /**
-     * 初始化 Index
+     * 初始化索引
      */
     public function initialIndex()
     {
-        $properties = $this->entityConverter->getProperties($this->getEntityClassName());
-
-        $response = $this->createIndex($properties);
-
-        return $response['acknowledged'] ?? false;
+        if ($this->existsType()) {
+            return false;
+        } else {
+            $properties = $this->entityConverter->getProperties($this->getEntityClassName());
+            $response = $this->createIndex($properties);
+            return $response['acknowledged'] ?? false;
+        }
     }
 
     public function findOneById($id)
     {
-        $response = $this->getDocument($id);
+        $document = $this->getDocument($id);
+        $found = $document['found'] ?? false;
+        if ($found) {
+            $entity = $this->entityConverter->documentToEntity($document, $this->getEntityClassName());
+        } else {
+            $entity = null;
+        }
+        return $entity;
+
     }
 
-    public function findOne(array $filter = [])
+    public function findOne($query)
     {
-
+        $entities = $this->findMany($query);
+        foreach ($entities as $entity) {
+            return $entity;
+        }
+        return null;
     }
 
-    public function findMany(array $filter = [], array $sort = null, int $skip = null, int $limit = null)
+    public function findMany($query = null, array $sort = null, int $skip = null, int $limit = null)
     {
+        if (null === $query) {
+            $query = [
+                'match_all' => new \stdClass()
+            ];
+        }
+        if (is_string($query)) {
+            $query = json_decode($query, true);
+        }
+
+        $body = [
+            "query" => $query
+        ];
+
+        $limit ? $body['size'] = $limit : null;
+        $skip ? $body['from'] = $skip : null;
+        $sort ? $body['sort'] = $sort : null;
+
+        $response = $this->searchDocuments($body);
+
+        $documents = $response['hits']['hits'] ?? [];
+        foreach ($documents as $document) {
+            yield  $this->entityConverter->documentToEntity($document, $this->getEntityClassName());
+        }
+    }
+
+    public function traversal($query = null)
+    {
+        if (null === $query) {
+            $query = [
+                'match_all' => new \stdClass()
+            ];
+        }
+        if (is_string($query)) {
+            $query = json_decode($query, true);
+        }
+
+        $body = [
+            "query" => $query
+        ];
+
+        $documents = $this->traversalDocuments($body);
+
+        foreach ($documents as $document) {
+            yield  $this->entityConverter->documentToEntity($document, $this->getEntityClassName());
+        }
 
     }
 
     public function deleteOne($entity)
     {
-
-    }
-
-    public function deleteMany(array $filter = [])
-    {
-
+        return $this->deleteDocument($this->entityConverter->getId($entity));
     }
 
     public function upsertOne($entity)
     {
+        $document = $this->entityConverter->entityToDocument($entity, $this->getEntityClassName());
+        $response = $this->indexDocument($document);
 
+        $succeed = $response['result'] == 'updated';
+        if ($succeed) {
+            $this->entityConverter->setId($entity, $response['_id'] ?? null);
+        }
+
+        return $succeed;
     }
 
     public function upsertMany($entities)
     {
-
+        $documents = (function () use ($entities) {
+            foreach ($entities as $entity) {
+                yield $this->entityConverter->entityToDocument($entity, $this->getEntityClassName());
+            }
+        })();
+        $this->indexMultiDocuments($documents);
     }
 
 
@@ -180,6 +251,23 @@ abstract class Repository
         ];
 
         return $this->client->indices()->putMapping($params);
+    }
+
+    /**
+     * @param $id
+     * @return bool
+     */
+    public function deleteDocument($id)
+    {
+        $params = [
+            'index' => $this->getIndexName(),
+            'type' => $this->getTypeName(),
+            'id' => $id
+        ];
+
+        $response = $this->client->delete($params);
+
+        return $response['result'] == 'deleted';
     }
 
     /**
