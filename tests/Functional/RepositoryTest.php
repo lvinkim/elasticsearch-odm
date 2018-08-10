@@ -22,9 +22,11 @@ class RepositoryTest extends TestCase
     /** @var DocumentManager */
     static private $documentManager;
 
+    private $extendIndexName = 'unit-test-v2';
+
     public static function setUpBeforeClass()
     {
-        $hosts = ['docker.for.mac.localhost:9200'];
+        $hosts = ['docker.for.mac.localhost:19200'];
         $manager = ClientBuilder::create()->setHosts($hosts)->build();
 
         self::$documentManager = new DocumentManager($manager);
@@ -39,13 +41,28 @@ class RepositoryTest extends TestCase
         $this->userRepository = self::$documentManager->getRepository(UserRepository::class);
     }
 
+
     public function testCreateIndex()
     {
+        $this->userRepository->setExtendIndexName($this->extendIndexName);
         $succeed = $this->userRepository->initialIndex();
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * @depends testCreateIndex
+     */
+    public function testUpdateAliases()
+    {
+        $succeed = $this->userRepository->updateAliases($this->extendIndexName);
 
         $this->assertTrue($succeed);
     }
 
+    /**
+     * @depends testUpdateAliases
+     */
     public function testIndexDocument()
     {
         $document = [
@@ -80,6 +97,9 @@ class RepositoryTest extends TestCase
         $this->assertEquals($document['_id'], $response['_id']);
     }
 
+    /**
+     * @depends testUpdateAliases
+     */
     public function testIndexMultiDocuments()
     {
         $documents = (function () {
@@ -241,6 +261,22 @@ class RepositoryTest extends TestCase
         foreach ($users as $user) {
             $this->assertInstanceOf(User::class, $user);
         }
+    }
+
+    /**
+     * @depends testIndexMultiDocuments
+     */
+    public function testCount()
+    {
+        $query = [
+            "match" => [
+                "company.address.city" => "广州",
+            ]
+        ];
+        $count = $this->userRepository->count($query);
+
+        $this->assertTrue(true);
+
     }
 
 }

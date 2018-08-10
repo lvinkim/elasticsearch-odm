@@ -13,7 +13,15 @@ use Tests\App\Entity\User;
 
 class UserRepository extends Repository
 {
+    private $extendIndexName;
 
+    /**
+     * @param mixed $extendIndexName
+     */
+    public function setExtendIndexName($extendIndexName): void
+    {
+        $this->extendIndexName = $extendIndexName;
+    }
 
     /**
      * 返回索引名, 例如: db, access-log-*, ... 等
@@ -21,7 +29,7 @@ class UserRepository extends Repository
      */
     protected function getIndexName(): string
     {
-        return 'unit-test-v4';
+        return $this->extendIndexName ?: 'unit-test';
     }
 
     /**

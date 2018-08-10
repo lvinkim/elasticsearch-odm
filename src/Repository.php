@@ -53,6 +53,33 @@ abstract class Repository
      */
     abstract protected function getEntityClassName(): string;
 
+    public function count($query)
+    {
+        if (null === $query) {
+            $query = [
+                'match_all' => new \stdClass()
+            ];
+        }
+        if (is_string($query)) {
+            $query = json_decode($query, true);
+        }
+
+        $body = [
+            "query" => $query
+        ];
+        $params = [
+            'index' => $this->getIndexName(),
+            'type' => $this->getTypeName(),
+            'body' => $body,
+        ];
+
+        $response = $this->client->count($params);
+
+        return $response['count'] ?? 0;
+
+
+    }
+
     /**
      * 删除索引
      * @return array
@@ -79,6 +106,44 @@ abstract class Repository
             $response = $this->createIndex($properties);
             return $response['acknowledged'] ?? false;
         }
+    }
+
+    public function updateAliases($newIndexName)
+    {
+        $params = [
+            'name' => $this->getIndexName(),
+            'index' => $newIndexName
+        ];
+        $exists = $this->client->indices()->existsAlias($params);
+
+        if (!$exists) {
+            $params = [
+                'name' => $this->getIndexName(),
+                'index' => $newIndexName
+            ];
+            $response = $this->client->indices()->putAlias($params);
+            $exists = $response['acknowledged'] ?? false;
+        }
+
+        if ($exists) {
+            $params = [
+                'name' => $this->getIndexName()
+            ];
+            $aliases = $this->client->indices()->getAlias($params);
+
+            foreach ($aliases as $oldIndex => $alias) {
+                if ($oldIndex == $newIndexName) {
+                    continue;
+                }
+                $params = [
+                    'name' => $this->getIndexName(),
+                    'index' => $oldIndex,
+                ];
+                $this->client->indices()->deleteAlias($params);
+            }
+        }
+
+        return $exists;
     }
 
     public function findOneById($id)
