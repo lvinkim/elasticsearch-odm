@@ -228,7 +228,7 @@ abstract class Repository
         $document = $this->entityConverter->entityToDocument($entity, $this->getEntityClassName());
         $response = $this->indexDocument($document);
 
-        $succeed = $response['result'] == 'updated';
+        $succeed = $response['_id'] ?? '';
         if ($succeed) {
             $this->entityConverter->setId($entity, $response['_id'] ?? null);
         }
