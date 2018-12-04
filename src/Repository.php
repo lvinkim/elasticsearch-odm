@@ -195,7 +195,12 @@ abstract class Repository
         }
     }
 
-    public function traversal($query = null)
+    /**
+     * @param null $query
+     * @param string $scroll
+     * @return \Generator
+     */
+    public function traversal($query = null, $scroll = "30s")
     {
         if (null === $query) {
             $query = [
@@ -210,7 +215,7 @@ abstract class Repository
             "query" => $query
         ];
 
-        $documents = $this->traversalDocuments($body);
+        $documents = $this->traversalDocuments($body, $scroll);
 
         foreach ($documents as $document) {
             yield  $this->entityConverter->documentToEntity($document, $this->getEntityClassName());
@@ -376,9 +381,10 @@ abstract class Repository
     /**
      * 遍历
      * @param null|string|array $body
+     * @param string $scroll
      * @return \Generator
      */
-    public function traversalDocuments($body = null)
+    public function traversalDocuments($body = null, $scroll = "30s")
     {
         if (!$body) {
             // 默认遍历所有记录
@@ -390,7 +396,7 @@ abstract class Repository
         }
 
         $params = [
-            "scroll" => "30s",
+            "scroll" => $scroll,
             "size" => 1000,
             'index' => $this->getIndexName(),
             'type' => $this->getTypeName(),
