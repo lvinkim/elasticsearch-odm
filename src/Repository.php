@@ -198,9 +198,10 @@ abstract class Repository
     /**
      * @param null $query
      * @param string $scroll
+     * @param null $sort
      * @return \Generator
      */
-    public function traversal($query = null, $scroll = "30s")
+    public function traversal($query = null, $scroll = "30s", $sort = null)
     {
         if (null === $query) {
             $query = [
@@ -211,9 +212,10 @@ abstract class Repository
             $query = json_decode($query, true);
         }
 
-        $body = [
-            "query" => $query
-        ];
+        $body = ["query" => $query];
+        if ($sort) {
+            $body["sort"] = $sort;
+        }
 
         $documents = $this->traversalDocuments($body, $scroll);
 
